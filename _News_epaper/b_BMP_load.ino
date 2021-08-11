@@ -24,7 +24,9 @@ void bmpLoad(char *filename, int x, int y, uint8_t* im_buffer) {
   uint32_t pos = 0;
   uint32_t imgidx = 0;
 
-  if((x >= ep_width) || (y >= ep_height)) return;
+  if((x >= ep_width) || (y >= ep_height)){
+    return;
+  }
 
   Serial.println();
   Serial.print(F("Loading image '"));
@@ -76,8 +78,12 @@ void bmpLoad(char *filename, int x, int y, uint8_t* im_buffer) {
         // Crop area to be loaded
         w = bmpWidth;
         h = bmpHeight;
-        if((x+w-1) >= ep_width)  w = ep_width  - x;
-        if((y+h-1) >= ep_height) h = ep_height - y;
+        if((x+w-1) >= ep_width){
+          w = ep_width  - x;
+        }
+        if((y+h-1) >= ep_height){
+          h = ep_height - y;
+        }
 
         for (row=0; row<h; row++) { // For each scanline...
           // Seek to start of scan line.  It might seem labor-
@@ -87,10 +93,12 @@ void bmpLoad(char *filename, int x, int y, uint8_t* im_buffer) {
           // place if the file position actually needs to change
           // (avoids a lot of cluster math in SD library).
           
-          if(flip) // Bitmap is stored bottom-to-top order (normal BMP)
+          if(flip){ // Bitmap is stored bottom-to-top order (normal BMP)
             pos = bmpImageoffset + (bmpHeight - 1 - row) * rowSize;
-          else     // Bitmap is stored top-to-bottom
+          }
+          else{     // Bitmap is stored top-to-bottom
             pos = bmpImageoffset + row * rowSize;
+          }
           if(bmpFile.position() != pos) { // Need seek?
             bmpFile.seek(pos);
             buffidx = sizeof(sdbuffer); // Force buffer reload
@@ -117,8 +125,53 @@ void bmpLoad(char *filename, int x, int y, uint8_t* im_buffer) {
   }
 
   bmpFile.close();
-  if(!goodBmp) Serial.println(F("BMP format not recognized."));
+  if(!goodBmp){
+    Serial.println(F("BMP format not recognized."));
+  }
 }
+
+
+uint8_t header_400x300[HEADER_LENGTH] = {     // extracted from an actual 400x300 bitmap file; not compatible with other resolutions!
+  0x42, 0x4D, 0x76, 0x7E, 0x05, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x36, 0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00,
+  0x90, 0x01, 0x00, 0x00, 0x2C, 0x01, 0x00, 0x00, 0x01,
+  0x00, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0xC4, 0x0E, 0x00, 0x00, 0xC4, 0x0E, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+String savePhotoBMP(uint8_t* img, String bmp_prefix, String list_name, uint16_t last_index){
+
+  uint8_t out_values[8];
+  uint8_t r, g, b;
+  uint8_t pixel;
+  char fn_arr[ARRAY_CHARS];
+  File bmp_file;
+  
+  filename = bmp_prefix + String(last_index + 1) + ".bmp";
+  filename.toCharArray(fn_arr, filename.length() + 1);
+  bmp_file = SD.open(fn_arr, FILE_WRITE);
+
+  for(uint8_t i = 0; i < HEADER_LENGTH; i++){
+    bmp_file.write(header_400x300[i]);
+  }
+  for(uint32_t p = 0; p < ((ep_width/8)*ep_height); p++){
+    pixel = img[p];
+    img_conv.bool8bitsTo8Bytes(pixel, out_values);
+    for(uint8_t e = 0; e < 8; e++){
+      convert.colorBoolTo888(out_values[e], r, g, b);
+      bmp_file.write(r);
+      bmp_file.write(g);
+      bmp_file.write(b);
+    }
+  }
+
+  bmp_file.close();
+
+  return (filename.toUpperCase());    // limitation of native SD library; the saved filename will always be uppercase; hence, return an appropriately converted filename.
+}
+
+
 
 // These read 16- and 32-bit types from the SD card file.
 // BMP data is stored little-endian, Arduino is little-endian too.
