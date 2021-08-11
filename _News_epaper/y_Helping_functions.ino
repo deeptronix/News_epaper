@@ -4,7 +4,8 @@ void deghost(uint8_t cycles){
   for(uint8_t k = 0; k < cycles; k++){
     epd.DisplayFrame();
     debugPrintln("Display deghosted (iter. " + String(k + 1) + " out of " + String(cycles) + ").");
-    delay(500);
+    delay(300);
+    epd.WaitUntilIdle();
   }
 }
 
@@ -21,7 +22,12 @@ bool pollESP(){
 
 void ackESP(){      // give the ESP32 an acknowledge
   digitalWrite(TRIGGER_OUT, 1);
-  while(digitalRead(IRQ_receive)){ delay(1); }
+  uint16_t cnt = 0;
+  while(digitalRead(IRQ_receive)){
+    delay(1);
+    cnt++;
+    assert(cnt > 0, "ackESP");
+  }
   digitalWrite(TRIGGER_OUT, 0);
 }
 
@@ -32,10 +38,15 @@ int32_t pullBuffer(uint8_t* buf, uint32_t len){
   do{
     while(channel.available() > 0){
       buf[i++] = channel.read();
+      assert(i > 0, "pullBuffer");
     }
-    delay(5);   // 10 was too much.
-    if(channel.available() > 0)  repeat = true;
-    else  repeat = false;
+    delay(10);   // if channel is emptied, wait a little to see if new data comes through
+    if(channel.available() > 0){
+      repeat = true;
+    }
+    else{
+      repeat = false;
+    }
   }while(repeat);
 
   channel.flush();
@@ -55,7 +66,7 @@ String getFirstChars(uint8_t* data, uint8_t len){
 
 
 inline void debugPrint(String text){
-  #ifdef DEBUG
+  #if DEBUG
     #if LOGGING_TO_SD
     String debug_name = debug_filename;
     char db_arr[ARRAY_CHARS];
@@ -72,7 +83,7 @@ inline void debugPrint(String text){
 }
 
 inline void debugPrintln(String text){
-  #ifdef DEBUG
+  #if DEBUG
     #if LOGGING_TO_SD
     String debug_name = debug_filename;
     char db_arr[ARRAY_CHARS];
@@ -89,7 +100,7 @@ inline void debugPrintln(String text){
 }
 
 inline void debugPrintln(){
-  #ifdef DEBUG
+  #if DEBUG
   debugPrintln("");
   #endif
 }
