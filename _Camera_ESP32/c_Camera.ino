@@ -1,4 +1,12 @@
 
+/*	@brief: checks whether in the captured image buffer a face can be detected.
+			In order to do so, since the original image is much bigger than what
+			the model is trained for, a scale+crop is required to get to the
+			target 320x240 resolution.
+	@param: the frame object pointer
+	@param: the actual frame buffer of image data
+	@returns: true if a face has been detected.
+*/
 bool detectFaces(camera_fb_t* frame, uint8_t* stored_fb){
   bool face_detected = 0;
 
@@ -38,6 +46,15 @@ bool detectFaces(camera_fb_t* frame, uint8_t* stored_fb){
 }
 
 
+/*	@brief: returns the amount of motion detected in an image, compared to the previous frame
+			buffer of data. Uses an internal comparison buffer that is updated at the end of
+			the comparison.
+			For speed and memory purposes, the image is scaled down significantly (constants 
+			can be found in z_Setup.h).
+	@param: the frame object pointer
+	@param: the actual frame buffer of image data
+	@returns: the percentage of motion detected in the image.
+*/
 uint16_t detectMotion(camera_fb_t* frame, uint8_t* stored_fb){
   uint32_t index;
   uint32_t motion_cnt = 0;
@@ -72,6 +89,13 @@ uint16_t detectMotion(camera_fb_t* frame, uint8_t* stored_fb){
 }
 
 
+/*	@brief: from the image buffer captured, measures how much light is present in the scene.
+			AGC might get in the way, but by default its value is low enough not to 
+			amplify the noise too much, so a reliable result can be obtained.
+	@param: the frame object pointer
+	@param: the actual frame buffer of image data
+	@returns: the percentage of light measured
+*/
 uint16_t getLightAmount(camera_fb_t* frame, uint8_t* stored_fb){
 
   stored_fb = frame->buf;
@@ -107,7 +131,9 @@ uint16_t getLightAmount(camera_fb_t* frame, uint8_t* stored_fb){
 }
 
 
-
+/*	@brief: captures a dummy frame buffer, only used for the internal AGC and auto setup of the camera.
+	@param: the number of dummy frames to be "captured" (but not saved)
+*/
 void cameraAutoAdjust(uint8_t cycles){
   camera_fb_t* frame;
   for(uint8_t c = 0; c < cycles; c++){
@@ -119,6 +145,8 @@ void cameraAutoAdjust(uint8_t cycles){
 }
 
 
+/*	@brief: initializes the camera: pins, timers, image format and resolution, quality.
+*/
 void initCamera(){
   camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_0;
@@ -156,7 +184,9 @@ void initCamera(){
 }
 
 
-
+/*	@brief: initializes the MTMN neural model for face detection; values are different from the default ones
+			because I wanted to increase sensitivity since we're dealing with BW images instead of color ones.
+*/
 void initMTMN(){
   mtmn_config = mtmn_init_config();
   mtmn_config.p_threshold.score = 0.55;
