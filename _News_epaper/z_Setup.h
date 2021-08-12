@@ -36,7 +36,7 @@ const String RECONVERT = "convert.txt";    // if this file is found on the SD ca
 #define STOP_char '.'
 #define SLOWDOWN_PLAYBACK_ms 0
 #define DEFAULT_SLEEP_TIMEOUT_sec 30    // this will be overwritten by the playlist "wait:_" value
-#define PHOTO_HOLD_PERIOD_sec 30      // 1800       // hold photo taken (inhibit playback) for a couple of minutes
+#define PHOTO_HOLD_PERIOD_sec  1800       // hold photo taken (inhibit playback) for a couple of minutes
 #define NIGHT_INSTR_PERIOD_sec 4800   // instructions (deghosting) period during the night: 80 minutes, which is 6 times in 8 hours. This can still 
                                       // be interrupted every 1 sec by an incoming message
 
@@ -46,7 +46,7 @@ const String RECONVERT = "convert.txt";    // if this file is found on the SD ca
 #define BUFFPIXEL 80
 const String photo_list_name = "photos.txt";    // .txt file that lists every available photo taken
 const String bmp_prefix = "mag";  	            // prefix used to save new photos taken; the total number of chars must be less than 8, including the suffix number!
-#define MAGIC_PROBABILITY 20    // 60
+#define MAGIC_PROBABILITY 60
 
 
 // Appearance parameters:
