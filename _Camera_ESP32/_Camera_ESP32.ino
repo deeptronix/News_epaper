@@ -5,7 +5,7 @@
 
 // WARNING! Make sure that you have selected ESP32 Wrover Module from the compiler boards.
 // Other settings, crucial and not, are:
-// - Flash Freq. = 800MHz
+// - Flash Freq. = 80MHz
 // - partition scheme = Huge APP (3MB No OTA/1MB SPIFFS)
 // - Core debug level = Verbose
 
